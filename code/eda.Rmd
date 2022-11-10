@@ -1,0 +1,108 @@
+---
+title: "EDA"
+author: "Yovna Junglee"
+date: '2022-11-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library("xts")
+library("ggplot2")
+library("tidyverse")
+rm(list=ls())
+
+
+```
+
+
+```{r}
+
+# Load data
+radnet <-
+  paste0("/Users/yovnajunglee/Documents/GitHub/radnet/radnet/Data/",list.files(path = "/Users/yovnajunglee/Documents/GitHub/radnet/radnet/Data", pattern = "*.csv")) %>% 
+  map_df(~read_csv(paste0(.)), col_types = cols(.default = "c"))
+
+
+colnames(radnet) <- gsub(" ", "_", colnames(radnet))
+colnames(radnet) <- gsub("[()]", ".", colnames(radnet))
+colnames(radnet) <- gsub("/", ".", colnames(radnet))
+
+
+
+# Data collected approximately every hour
+
+radnet$SAMPLE_COLLECTION_TIME <- (as.POSIXct(strptime(radnet$SAMPLE_COLLECTION_TIME, "%m/%d/%Y %H:%M:%S"), 
+                                               tryFormats = "%m/%d/%Y %H:%M:%S", tz = "UTC"))
+
+
+```
+
+
+```{r}
+summary(radnet)
+```
+
+```{r}
+
+# === Dose equivalent rate (~ exposure rate)
+
+# Amount of radiation energy absorbed by the body, which is calculated to account
+# for the different types of radiation (such as alpha and beta) and
+# how sensitive different organs are to radiation (for example, bone compared to lungs).
+
+# https://www.epa.gov/radnet/about-exposure-and-dose-rates
+
+
+ggplot(data = radnet , aes(x= SAMPLE_COLLECTION_TIME, y = DOSE_EQUIVALENT_RATE_.nSv.h. ))  + geom_line()
+
+
+
+```
+
+
+```{r}
+
+# === Gamma count rate
+
+# RadNet stationary air monitors measure gamma radiation 
+# emitted from airborne radioactive particles as they
+# collect on the monitor's filter. EPA uses
+# RadNet monitors to track fluctuations in gamma radiation emitted 
+# from airborne radioactive particles at each of our sites. 
+
+# https://www.epa.gov/radnet/what-do-different-gamma-channel-ranges-illustrate-what-does-each-range-represent
+
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R02_.CPM.)) + geom_line()
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R03_.CPM.)) + geom_line()
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R04_.CPM.)) + geom_line()
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R05_.CPM.)) + geom_line()
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R06_.CPM.)) + geom_line()
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R07_.CPM.)) + geom_line()
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R08_.CPM.)) + geom_line()
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R09_.CPM.)) + geom_line()
+
+
+
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = rowSums(radnet[,4:11]))) + geom_line()
+
+
+```
+
+
+```{r}
+library(xml2)
+library(rvest)
+url <- "https://enviro.epa.gov/enviro/erams_query_v2.simple_output?Llocation=Station&pStation=1&subloc=CARLSBAD%2CNM&media=AIR-FILTER&radi=Gross+Beta&Fromyear=1978&Toyear=2022&units=SI"
+page <- read_html(url) #Creates an html document from URL
+table <- html_table(page, fill = TRUE) #Parses tables into data frames
+
+gross_beta <- table[[1]]
+
+gross_beta$`Sample Date` <- (as.POSIXct(strptime(gross_beta$`Sample Date`, "%d-%b-%y"), tryFormats = "%d-%b-%y", tz = "UTC"))
+
+head(gross_beta$`Sample Date`)
+
+ggplot(gross_beta, aes(y = Result, x = `Sample Date`)) + geom_line() +labs(y = "Gross beta")
+
+```

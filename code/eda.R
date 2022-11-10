@@ -1,49 +1,72 @@
 library("xts")
 library("ggplot2")
+library("tidyverse")
+rm(list=ls())
 
+
+setwd("./Data/")
 
 # Analysis of radioactivity data in Carlsbad, New Mexico
 
+radnet <-
+  list.files( pattern = "*.csv") %>% 
+  map_df(~read_csv(.), col_types = cols(.default = "c"))
 
-radnet2022 <- read.csv("Data/NM_CARLSBAD_2022.csv")
+
+colnames(radnet) <- gsub(" ", "_", colnames(radnet))
+colnames(radnet) <- gsub("[()]", ".", colnames(radnet))
+colnames(radnet) <- gsub("/", ".", colnames(radnet))
+
+colnames(radnet)
 
 # Data collected approximately every hour
 
-radnet2022$SAMPLE.COLLECTION.TIME
-
-# Histograms of Gamma particles
-
-hist(radnet2022$DOSE.EQUIVALENT.RATE..nSv.h.)
-hist(radnet2022$GAMMA.COUNT.RATE.R02..CPM.)
-hist(radnet2022$GAMMA.COUNT.RATE.R03..CPM.)
-hist(radnet2022$GAMMA.COUNT.RATE.R04..CPM.)
-hist(radnet2022$GAMMA.COUNT.RATE.R05..CPM.)
-hist(radnet2022$GAMMA.COUNT.RATE.R06..CPM.)
-hist(radnet2022$GAMMA.COUNT.RATE.R07..CPM.)
-hist(radnet2022$GAMMA.COUNT.RATE.R08..CPM.)
-hist(radnet2022$GAMMA.COUNT.RATE.R09..CPM.)
-
-head(radnet2022$SAMPLE.COLLECTION.TIME)
-
-radnet2022$SAMPLE.COLLECTION.TIME <- (as.POSIXct(strptime(radnet2022$SAMPLE.COLLECTION.TIME, "%m/%d/%Y %H:%M:%S"), 
-           tryFormats = "%m/%d/%Y %H:%M:%S", tz = "UTC"))
+radnet$SAMPLE_COLLECTION_TIME <- (as.POSIXct(strptime(radnet$SAMPLE_COLLECTION_TIME, "%m/%d/%Y %H:%M:%S"), 
+                                               tryFormats = "%m/%d/%Y %H:%M:%S", tz = "UTC"))
 
 
-ggplot(data = radnet2022 , aes(x=SAMPLE.COLLECTION.TIME, y = GAMMA.COUNT.RATE.R02..CPM.)) +
+# === Dose equivalent rate (~ exposure rate)
+
+# Amount of radiation energy absorbed by the body, which is calculated to account
+# for the different types of radiation (such as alpha and beta) and
+# how sensitive different organs are to radiation (for example, bone compared to lungs).
+
+# https://www.epa.gov/radnet/about-exposure-and-dose-rates
+
+
+ggplot(data = radnet , aes(x= SAMPLE_COLLECTION_TIME, y = DOSE_EQUIVALENT_RATE_.nSv.h. )) +
   geom_path(col = 'darkblue', alpha=.5)
-ggplot(data = radnet2022 , aes(x=SAMPLE.COLLECTION.TIME, y = GAMMA.COUNT.RATE.R03..CPM.)) +
+
+
+
+# === Gamma count rate
+
+# RadNet stationary air monitors measure gamma radiation 
+# emitted from airborne radioactive particles as they
+# collect on the monitor's filter. EPA uses
+# RadNet monitors to track fluctuations in gamma radiation emitted 
+# from airborne radioactive particles at each of our sites. 
+
+# https://www.epa.gov/radnet/what-do-different-gamma-channel-ranges-illustrate-what-does-each-range-represent
+
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R02_.CPM.)) +
   geom_path(col = 'darkblue', alpha=.5)
-ggplot(data = radnet2022 , aes(x=SAMPLE.COLLECTION.TIME, y = GAMMA.COUNT.RATE.R04..CPM.)) +
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R03_.CPM.)) +
   geom_path(col = 'darkblue', alpha=.5)
-ggplot(data = radnet2022 , aes(x=SAMPLE.COLLECTION.TIME, y = GAMMA.COUNT.RATE.R05..CPM.)) +
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R04_.CPM.)) +
   geom_path(col = 'darkblue', alpha=.5)
-ggplot(data = radnet2022 , aes(x=SAMPLE.COLLECTION.TIME, y = GAMMA.COUNT.RATE.R06..CPM.)) +
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R05_.CPM.)) +
   geom_path(col = 'darkblue', alpha=.5)
-ggplot(data = radnet2022 , aes(x=SAMPLE.COLLECTION.TIME, y = GAMMA.COUNT.RATE.R07..CPM.)) +
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R06_.CPM.)) +
   geom_path(col = 'darkblue', alpha=.5)
-ggplot(data = radnet2022 , aes(x=SAMPLE.COLLECTION.TIME, y = GAMMA.COUNT.RATE.R08..CPM.)) +
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R07_.CPM.)) +
   geom_path(col = 'darkblue', alpha=.5)
-ggplot(data = radnet2022 , aes(x=SAMPLE.COLLECTION.TIME, y = GAMMA.COUNT.RATE.R09..CPM.)) +
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R08_.CPM.)) +
   geom_path(col = 'darkblue', alpha=.5)
-ggplot(data = radnet2022 , aes(x=SAMPLE.COLLECTION.TIME, y = DOSE.EQUIVALENT.RATE..nSv.h.)) +
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = GAMMA_COUNT_RATE_R09_.CPM.)) +
+  geom_path(col = 'darkblue', alpha=.5)
+
+
+
+ggplot(data = radnet , aes(x=SAMPLE_COLLECTION_TIME, y = rowSums(radnet[,4:11]))) +
   geom_path(col = 'darkblue', alpha=.5)
